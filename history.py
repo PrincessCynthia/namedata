@@ -12,49 +12,19 @@
 
 # I've included:
 #  * The original data (allyears.csv)
-#  * Commands for condensing the data (FULL HISTORY section)
+#  * Commands for condensing the data (DISTILLING section)
 #  * Analyzed data, with gender ratios (ratios.csv)
 #  * Instructions for quickly loading the ratios (QUICK START section)
 #  * A few starter queries (SAMPLE QUERIES section)
 
 
-# The easiest way to get started is to skip to the QUICK START section.
-
-
-
-##### FULL HISTORY #####
-
-#First, get the data into the desired format:
-import pandas as pd
-names = pd.read_csv('allyears.csv')
-
-# Optional: Filter by year to exclude outdated info
-names=names[names.year > 1970]
-
-combnames=names.groupby(['name','gender'])[['qty']].sum().sort_values(['qty'])
-combnames=combnames.reset_index()
-
-
-
-m=combnames[combnames['gender'] == 'M'][['name','qty']]
-f=combnames[combnames['gender'] == 'F'][['name','qty']]
-
-m.columns=['name','men']
-f.columns=['name','women']
-
-n=pd.merge(m,f,on='name',how='outer')
-n=n.fillna(0)
-n.men=n.men.astype(int)
-n.women=n.women.astype(int)
-n['fem'] = n.women / (n.men + n.women)
-
-
-# Write the data to a CSV file:
-n.to_csv('ratios.csv', index=False)
-
+# The easiest way to get started is the QUICK START section.
 
 
 ##### QUICK START #####
+
+
+import pandas as pd
 
 # Load the data from a CSV file in the future:
 n=pd.read_csv('ratios.csv',index_col=False)
@@ -82,4 +52,40 @@ n[n.fem > 0.49][n.fem < 0.51].sort_values('women')
 
 # How many names are 99.9% fem and have more than 10000 women?
 len(n[n.fem > 0.999][n.women > 10000])
+
+
+##### DISTILLING #####
+
+# This allows you to regenerate the ratio data.  This can be useful to change the year range, or to include updated data. 
+
+#If starting from here make sure you execute 'import pandas as pd' first
+
+#First, get the data into the desired format:
+names = pd.read_csv('allyears.csv')
+
+# Optional: Filter by year to exclude outdated info
+names=names[names.year > 1970]
+
+combnames=names.groupby(['name','gender'])[['qty']].sum().sort_values(['qty'])
+combnames=combnames.reset_index()
+
+m=combnames[combnames['gender'] == 'M'][['name','qty']]
+f=combnames[combnames['gender'] == 'F'][['name','qty']]
+
+m.columns=['name','men']
+f.columns=['name','women']
+
+n=pd.merge(m,f,on='name',how='outer')
+n=n.fillna(0)
+n.men=n.men.astype(int)
+n.women=n.women.astype(int)
+n['fem'] = n.women / (n.men + n.women)
+#Optional: Include a masculinity column.  This is off by default because it's
+# redundant, you can always switch between the two by subtracting from one
+# (e.g. masc = 1 - fem)
+
+#n['masc'] = n.men / (n.men + n.women)
+
+# Write the data to a CSV file:
+n.to_csv('ratios.csv', index=False)
 
